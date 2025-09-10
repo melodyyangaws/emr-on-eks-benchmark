@@ -1,0 +1,49 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: emr72-boto3-test
+  namespace: oss
+spec:
+  type: Python
+  mode: cluster
+  # entrypoint contains real aws-role arn value and only credentials files
+  image: "melodydocker/emr7.2_custom_configonly"
+  imagePullPolicy: Always
+  # download code from EKS account
+  mainApplicationFile: "s3://emr-on-eks-test-021732063925-us-west-2/test-only-boto3.py"
+  arguments:
+    - "emr-on-eks-rss-021732063925-us-west-2"
+    - "BLOG_TPCDS-TEST-3T-partitioned/reason"
+    - "https://sqs.us-west-2.amazonaws.com/021732063925/karpenter-emr-eks-karpenter"
+  driver:
+    cores: 1
+    memory: "1g"
+    serviceAccount: spark-operator-spark
+  executor:
+    cores: 1
+    instances: 1
+    memory: "1g"
+  sparkConf:
+    spark.driver.extraClassPath: /usr/share/aws/aws-java-sdk-v2/*:/usr/lib/hadoop-lzo/lib/*:/usr/lib/hadoop/hadoop-aws.jar:/usr/share/aws/aws-java-sdk/*:/usr/share/aws/emr/emrfs/conf:/usr/share/aws/emr/emrfs/lib/*:/usr/share/aws/emr/emrfs/auxlib/*:/usr/share/aws/emr/security/conf:/usr/share/aws/emr/security/lib/*:/usr/share/aws/hmclient/lib/aws-glue-datacatalog-spark-client.jar:/usr/share/java/Hive-JSON-Serde/hive-openx-serde.jar:/usr/share/aws/sagemaker-spark-sdk/lib/sagemaker-spark-sdk.jar:/home/hadoop/extrajars/*
+    spark.executor.extraClassPath: /usr/share/aws/aws-java-sdk-v2/*:/usr/lib/hadoop-lzo/lib/*:/usr/lib/hadoop/hadoop-aws.jar:/usr/share/aws/aws-java-sdk/*:/usr/share/aws/emr/emrfs/conf:/usr/share/aws/emr/emrfs/lib/*:/usr/share/aws/emr/emrfs/auxlib/*:/usr/share/aws/emr/security/conf:/usr/share/aws/emr/security/lib/*:/usr/share/aws/hmclient/lib/aws-glue-datacatalog-spark-client.jar:/usr/share/java/Hive-JSON-Serde/hive-openx-serde.jar:/usr/share/aws/sagemaker-spark-sdk/lib/sagemaker-spark-sdk.jar:/home/hadoop/extrajars/*
+    spark.network.timeout: 2000s
+    spark.executor.heartbeatInterval: 300s
+    spark.kubernetes.executor.podNamePrefix: emr-operator
+    spark.kubernetes.node.selector.eks.amazonaws.com/nodegroup: c5d9b
+
+    spark.kubernetes.driverEnv.WEB_IDENTITY_ROLE_ARN: "arn:aws:iam::021732063925:role/emr-on-eks-test-execution-role"
+    spark.executorEnv.WEB_IDENTITY_ROLE_ARN: "arn:aws:iam::021732063925:role/emr-on-eks-test-execution-role"
+    
+    # spark.kubernetes.driverEnv.AWS_ROLE_ARN: "arn:aws:iam::021732063925:role/emr-on-eks-client-a-role"
+    # spark.executorEnv.AWS_ROLE_ARN: "arn:aws:iam::021732063925:role/emr-on-eks-client-a-role"
+    # spark.kubernetes.driverEnv.AWS_WEB_IDENTITY_TOKEN_FILE: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+    # spark.executorEnv.AWS_WEB_IDENTITY_TOKEN_FILE: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+
+  hadoopConf:
+    fs.s3.customAWSCredentialsProvider: com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+    fs.s3.impl: com.amazon.ws.emr.hadoop.fs.EmrFileSystem
+    fs.AbstractFileSystem.s3.impl: org.apache.hadoop.fs.s3.EMRFSDelegate
+    fs.s3.buffer.dir: /mnt/s3
+    fs.s3.getObject.initialSocketTimeoutMilliseconds: "2000"
+    mapreduce.fileoutputcommitter.algorithm.version.emr_internal_use_only.EmrFileSystem: "2"
+    mapreduce.fileoutputcommitter.cleanup-failures.ignored.emr_internal_use_only.EmrFileSystem: "true"   

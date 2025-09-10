@@ -1,0 +1,7 @@
+[profile default]
+source_profile = irsa_role
+role_arn=arn:aws:iam::ACCOUNTID:role/emr-on-eks-client-a-role
+
+[profile irsa_role]
+web_identity_token_file = /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+role_arn=arn:aws:iam::ACCOUNTID:role/emr-on-eks-test-execution-role

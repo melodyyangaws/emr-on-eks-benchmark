@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: irsa-test
+  namespace: emr
+spec:
+  nodeSelector:
+    eks.amazonaws.com/nodegroup: c5d9b
+  serviceAccountName:
+    emr-containers-sa-spark-client-021732063925-1sseqknnoni14bdu6yyw9n3ft32986beoj10gadqfez009x  
+  containers:
+  - name: test
+    image: public.ecr.aws/myang-poc/eks-spark-benchmark:emr7.2.0
+    volumeMounts:
+    - name: aws-config
+      mountPath: /home/hadoop/.aws/config
+      subPath: config
+  volumes:
+  - name: aws-config
+    hostPath:
+      path: /Users/meloyang/.aws/config_irsa_poc
+      type: File
